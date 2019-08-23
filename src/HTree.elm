@@ -224,17 +224,11 @@ iterate k f x =
 -- LEVELS --
 
 
-levelOfLastChild : (a -> Int) -> Zipper a -> Maybe Int
-levelOfLastChild level z =
-    Zipper.lastChild z
-        |> Maybe.map Zipper.tree
-        |> Maybe.map Tree.label
-        |> Maybe.map level
-
-
 levelDifference : (a -> Int) -> a -> Zipper a -> Maybe Int
-levelDifference level s z =
-    Maybe.map2 (-) (Just <| level s) (levelOfLastChild level z)
+levelDifference level current zipper =
+    Zipper.lastChild zipper
+        |> Maybe.map (Zipper.tree >> Tree.label >> level)
+        |> Maybe.map (\levelOfLastChild -> level current - levelOfLastChild)
 
 
 
