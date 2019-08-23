@@ -312,32 +312,23 @@ toOutline : (a -> String) -> Tree a -> String
 toOutline stringOfLabel t =
     t
         |> tagWithDepth
-        |> toOutline_ stringOfLabel
+        |> toOutlineHelp stringOfLabel
 
 
-toOutline_ : (a -> String) -> Tree ( a, Int ) -> String
-toOutline_ stringOfLabel t =
+toOutlineHelp : (a -> String) -> Tree ( a, Int ) -> String
+toOutlineHelp labelToString =
     let
-        stringOfLabel_ t_ =
-            Tree.label t_ |> Tuple.first |> stringOfLabel
+        combine : ( String, Int ) -> List String -> String
+        combine ( currentLabel, currentLevel ) children =
+            let
+                prefix =
+                    String.repeat (2 * (currentLevel - 1)) " "
+            in
+            case children of
+                [] ->
+                    prefix ++ currentLabel
 
-        c =
-            Tree.children t
-
-        ( label_, level_ ) =
-            Tree.label t |> (\( la, le ) -> ( stringOfLabel_ t, le ))
-
-        n =
-            2 * (level_ - 1)
-
-        prefix =
-            String.repeat n " "
-
-        lab =
-            prefix ++ label_
+                _ ->
+                    prefix ++ currentLabel ++ "\n" ++ String.join "\n" children
     in
-    if c == [] then
-        lab
-
-    else
-        lab ++ "\n" ++ (List.map (toOutline_ stringOfLabel) c |> String.join "\n")
+    Tree.restructure (Tuple.mapFirst labelToString) combine
