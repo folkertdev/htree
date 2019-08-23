@@ -56,34 +56,26 @@ integer division, no remainder.
 
 -}
 fromList : a -> (a -> Int) -> List a -> Tree a
-fromList rooLabel level lst =
-    lst
-        |> List.foldl (\s z -> step level s z) (Zipper.fromTree (Tree.singleton rooLabel))
+fromList root toLevel list =
+    list
+        |> List.foldl (step toLevel) (Zipper.fromTree (Tree.singleton root))
         |> Zipper.toTree
 
 
 step : (a -> Int) -> a -> Zipper a -> Zipper a
-step level s z =
-    let
-        ld =
-            levelDifference level s z
-    in
-    case ld of
+step toLevel s z =
+    case levelDifference toLevel s z of
         Nothing ->
-            appendAtFocus level s z
+            appendAtFocus toLevel s z
 
         Just 0 ->
-            appendAtFocus level s z
+            appendAtFocus toLevel s z
 
         Just 1 ->
-            addChildAtFocus level s z
+            addChildAtFocus toLevel s z
 
-        _ ->
-            let
-                levelsBack =
-                    negate (ld |> Maybe.withDefault 0)
-            in
-            addAtNthParent level levelsBack s z
+        Just levelsBack ->
+            addAtNthParent toLevel (negate levelsBack) s z
 
 
 {-| The `tag` function transforms a tree of items into
