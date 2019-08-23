@@ -269,16 +269,8 @@ The count includes the root.
 
 -}
 nodeCount : Tree a -> Int
-nodeCount t =
-    let
-        c =
-            Tree.children t
-    in
-    if c == [] then
-        1
-
-    else
-        1 + List.sum (List.map nodeCount c)
+nodeCount =
+    Tree.foldl (\_ accum -> accum + 1) 0
 
 
 listMax : List Int -> Int
