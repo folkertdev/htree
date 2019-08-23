@@ -249,15 +249,16 @@ levelDifference level s z =
 -}
 depth : Tree a -> Int
 depth t =
+    -- rose trees are always non-empty (have a root)
+    -- so depth is always at least 1
     let
-        c =
+        childDepth =
             Tree.children t
+                |> List.map depth
+                |> List.maximum
+                |> Maybe.withDefault 0
     in
-    if c == [] then
-        0
-
-    else
-        1 + listMax (List.map depth c)
+    1 + childDepth
 
 
 {-| nodecount t is the number of notes in the tree t
@@ -271,11 +272,6 @@ The count includes the root.
 nodeCount : Tree a -> Int
 nodeCount =
     Tree.foldl (\_ accum -> accum + 1) 0
-
-
-listMax : List Int -> Int
-listMax ints =
-    List.foldl (\i acc -> max i acc) 0 ints
 
 
 
