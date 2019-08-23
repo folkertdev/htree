@@ -1,5 +1,15 @@
 module Example.Test exposing (..)
 
+import Tree exposing (Tree)
+
+
+tree =
+    Tree.tree "*"
+        [ Tree.tree "A" [ Tree.tree "  p" [], Tree.tree "  q" [] ]
+        , Tree.tree "B" [ Tree.tree "  r" [], Tree.tree "  s" [] ]
+        , Tree.tree "C" []
+        ]
+
 
 o1 =
     """A

@@ -23,7 +23,7 @@ import Tree.Zipper as Zipper exposing (Zipper)
 
 `fromList` returns the corresponding rose tree. For an example this snippet
 
-    import Example.Test as Example exposing (o2)
+    import Example.Test exposing (o2)
     import HTree.String as HS
     import Tree exposing (Tree)
 
@@ -35,18 +35,18 @@ import Tree.Zipper as Zipper exposing (Zipper)
     data
         --> ["A","  p","  q","B","  r","  s","C"]
 
-    tree : Tree String
-    tree =
-        -- `HS.level` returns the number of leading spaces
-        -- divided by 2 using integer division.
-        fromList "*" HS.level data
+    -- `HS.level` returns the number of leading spaces
+    -- divided by 2 using integer division.
+    fromList "*" HS.level data
+        --> Example.Test.tree
 
-    tree
-        --> Tree "*"
-        --> [ Tree "A" [ Tree "  p" [], Tree "  q" [] ]
-        --> , Tree "B" [ Tree "  r" [], Tree "  s" [] ]
-        --> , Tree "C" []
-        --> ]
+    -- The tree we created is our running example
+    Example.Test.tree
+        ---> Tree "*"
+        ---> [ Tree "A" [ Tree "  p" [], Tree "  q" [] ]
+        ---> , Tree "B" [ Tree "  r" [], Tree "  s" [] ]
+        ---> , Tree "C" []
+        ---> ]
 
 produces the outline
 
@@ -87,16 +87,16 @@ step toLevel s z =
             addAtNthParent toLevel (negate levelsBack) s z
 
 
-{-| The `tag` function transforms a tree of items into
-a tree of tuples of the form `(a, k)`, where `k` is the
-depth of `a` in the tree.
+{-| Tag every node with its corresponding depth.
 
-    tag (Tree.map String.trim tree)
-        --> Tree ( "*", 0 )
-        -->     [ Tree ( "A", 1 ) [ Tree ( "p", 2 ) [] , Tree ( "q", 2 ) [] ]
-        -->     , Tree ( "B", 1 ) [ Tree ( "r", 2 ) [], Tree ( "s", 2 ) [] ]
-        -->     , Tree ( "C", 1 ) []
-        -->     ]
+    import Example.Test
+
+    tagWithDepth (Tree.map String.trim Example.Test.tree)
+        ---> Tree ( "*", 0 )
+        --->     [ Tree ( "A", 1 ) [ Tree ( "p", 2 ) [] , Tree ( "q", 2 ) [] ]
+        --->     , Tree ( "B", 1 ) [ Tree ( "r", 2 ) [], Tree ( "s", 2 ) [] ]
+        --->     , Tree ( "C", 1 ) []
+        --->     ]
 
 -}
 tagWithDepth : Tree a -> Tree { label : a, depth : Int }
@@ -116,14 +116,17 @@ tagWithDepthHelp t k =
 
 {-| Flatten a tree into a list of labels.
 
-    Tree.map (\label -> String.trim label) tree
-        --> Tree "*"
-        -->     [ Tree "A" [ Tree "p" [], Tree "q" [] ]
-        -->     , Tree "B" [ Tree "r" [], Tree "s" [] ]
-        -->     , Tree "C" []
-        -->     ]
+    import Example.Test
+    import Tree
 
-    Tree.map (\label -> String.trim label) tree
+    Tree.map (\label -> String.trim label) Example.Test.tree
+        ---> Tree "*"
+        --->     [ Tree "A" [ Tree "p" [], Tree "q" [] ]
+        --->     , Tree "B" [ Tree "r" [], Tree "s" [] ]
+        --->     , Tree "C" []
+        --->     ]
+
+    Tree.map (\label -> String.trim label) Example.Test.tree
         |> toList
             --> [ "*", "A", "p", "q", "B", "r", "s", "C" ]
 
@@ -232,27 +235,34 @@ levelDifference level current zipper =
 
 {-| Depth of the tree
 
-    depth tree
+    import Example.Test
+
+    depth Example.Test.tree
         --> 2
 
 -}
 depth : Tree a -> Int
 depth t =
-    -- rose trees are always non-empty (have a root)
-    -- so depth is always at least 1
-    let
-        childDepth =
-            Tree.children t
-                |> List.map depth
-                |> List.maximum
-                |> Maybe.withDefault 0
-    in
-    1 + childDepth
+    case Tree.children t of
+        [] ->
+            0
+
+        children ->
+            let
+                childDepth =
+                    children
+                        |> List.map depth
+                        |> List.maximum
+                        |> Maybe.withDefault 0
+            in
+            1 + childDepth
 
 
 {-| Number of nodes in the tree
 
-    nodeCount tree
+    import Example.Test
+
+    nodeCount Example.Test.tree
         --> 8
 
 The count includes the root.
@@ -270,7 +280,9 @@ nodeCount =
 {-| Given a function that maps labels to strings, construct
 a string that represents the tree as an outline.
 
-    toOutline identity tree
+    import Example.Test
+
+    toOutline identity Example.Test.tree
         --> "*\nA\n    p\n    q\nB\n    r\n    s\nC"
 
 The string returned is
