@@ -1,14 +1,13 @@
-module HTree exposing
-    ( fromList, toList, toOutline, depth, nodeCount
-    , tagWithDepth
-    )
+module HTree exposing (fromList, toList, toOutline, depth, nodeCount, tagWithDepth)
 
-{-| Convert hierarchical lists to a rose tree,
-convert a rose tree to a list of node labels,
-convert a rose tree to a string representing the
-corresponding outline, etc. See HTreeExample.elm.
+{-| Working with hierarchical lists.
 
-@docs fromList, toList, toOutline, tag, depth, nodeCount
+  - convert a hierarchical list to a rose tree
+  - convert a rose tree to a list of node labels
+  - convert a rose tree to a string representing the corresponding outline
+  - etc.
+
+@docs fromList, toList, toOutline, depth, nodeCount, tagWithDepth
 
 -}
 
@@ -16,11 +15,40 @@ import Tree exposing (Tree, singleton)
 import Tree.Zipper as Zipper exposing (Zipper)
 
 
-{-| Suppose give an list of items of type `a`, a "root" element
-of type `a`, and a function that determines the level of an item.
-The function `fromList` returns the corresponding rose tree.
-For an example, consider the outline given by the string
-\`Example.Test.o3:
+{-| Given:
+
+  - a list of items of type a
+  - a root element of type a
+  - a function that determines the level of an item
+
+`fromList` returns the corresponding rose tree. For an example this snippet
+
+    import Example.Test as Example exposing (o2)
+    import HTree.String as HS
+    import Tree exposing (Tree)
+
+    data : List String
+    data =
+        String.split "\n" o2
+            |> List.filter (not << String.isEmpty)
+
+    data
+        --> ["A","  p","  q","B","  r","  s","C"]
+
+    tree : Tree String
+    tree =
+        -- `HS.level` returns the number of leading spaces
+        -- divided by 2 using integer division.
+        fromList "*" HS.level data
+
+    tree
+        --> Tree "*"
+        --> [ Tree "A" [ Tree "  p" [], Tree "  q" [] ]
+        --> , Tree "B" [ Tree "  r" [], Tree "  s" [] ]
+        --> , Tree "C" []
+        --> ]
+
+produces the outline
 
     A
         p
@@ -34,25 +62,6 @@ For an example, consider the outline given by the string
         s
 
     C
-
-Then we have
-
-    > import HTree exposing(..)
-    > import HTree.String as HS
-    > import Example.Test as Example
-
-    > data = String.split "\n" o2 |> List.filter (\line -> line /= "")
-    ["A","  p","  q","B","  r","  s","C"]
-        : List String
-
-    > t = fromList "*" HS.level data
-    Tree "*"
-       [Tree "A" [Tree ("  p") [],Tree ("  q") []]
-       ,Tree "B" [Tree ("  r") [],Tree ("  s") []]
-       ,Tree "C" []]
-
-The function `HS.level` returns the number of leading spaces divided by 2 --
-integer division, no remainder.
 
 -}
 fromList : a -> (a -> Int) -> List a -> Tree a
@@ -82,11 +91,12 @@ step toLevel s z =
 a tree of tuples of the form `(a, k)`, where `k` is the
 depth of `a` in the tree.
 
-    > tag (Tree.map String.trim t)
-      Tree ("*",0) [
-        Tree ("A",1) [Tree ("p",2) [],Tree ("q",2) []]
-       ,Tree ("B",1) [Tree ("r",2) [],Tree ("s",2) []]
-       ,Tree ("C",1) []]
+    tag (Tree.map String.trim tree)
+        --> Tree ( "*", 0 )
+        -->     [ Tree ( "A", 1 ) [ Tree ( "p", 2 ) [] , Tree ( "q", 2 ) [] ]
+        -->     , Tree ( "B", 1 ) [ Tree ( "r", 2 ) [], Tree ( "s", 2 ) [] ]
+        -->     , Tree ( "C", 1 ) []
+        -->     ]
 
 -}
 tagWithDepth : Tree a -> Tree { label : a, depth : Int }
@@ -104,18 +114,18 @@ tagWithDepthHelp t k =
     Tree.tree { label = Tree.label t, depth = k } children
 
 
-{-| Map a tree to a list of node contents:
+{-| Flatten a tree into a list of labels.
 
-    > import Tree
+    Tree.map (\label -> String.trim label) tree
+        --> Tree "*"
+        -->     [ Tree "A" [ Tree "p" [], Tree "q" [] ]
+        -->     , Tree "B" [ Tree "r" [], Tree "s" [] ]
+        -->     , Tree "C" []
+        -->     ]
 
-    > t |> Tree.map (\label -> String.trim label)
-      Tree "*" [
-         Tree "A" [Tree "p" [],Tree "q" []]
-        ,Tree "B" [Tree "r" [],Tree "s" []]
-        ,Tree "C" []]
-
-     > t |> Tree.map (\label -> String.trim label) |> toList
-       ["*","A","p","q","B","r","s","C"]
+    Tree.map (\label -> String.trim label) tree
+        |> toList
+            --> [ "*", "A", "p", "q", "B", "r", "s", "C" ]
 
 -}
 toList : Tree b -> List b
@@ -220,10 +230,10 @@ levelDifference level current zipper =
 -- STANDARD TREE FUNCTIONS --
 
 
-{-| depth t is the depth of the tree.
+{-| Depth of the tree
 
-    > depth t
-    2 : I
+    depth tree
+        --> 2
 
 -}
 depth : Tree a -> Int
@@ -240,10 +250,10 @@ depth t =
     1 + childDepth
 
 
-{-| nodecount t is the number of notes in the tree t
+{-| Number of nodes in the tree
 
-    > nodeCount t
-    8 : Int
+    nodeCount tree
+        --> 8
 
 The count includes the root.
 
@@ -260,8 +270,8 @@ nodeCount =
 {-| Given a function that maps labels to strings, construct
 a string that represents the tree as an outline.
 
-    > t |> toOutline identity
-    "*\nA\n    p\n    q\nB\n    r\n    s\nC" : String
+    toOutline identity tree
+        --> "*\nA\n    p\n    q\nB\n    r\n    s\nC"
 
 The string returned is
 
