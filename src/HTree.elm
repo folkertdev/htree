@@ -89,18 +89,19 @@ depth of `a` in the tree.
        ,Tree ("C",1) []]
 
 -}
-tagWithDepth : Tree a -> Tree ( a, Int )
+tagWithDepth : Tree a -> Tree { label : a, depth : Int }
 tagWithDepth t =
-    tagWithDepth_ ( t, 0 )
+    tagWithDepthHelp t 0
 
 
-tagWithDepth_ : ( Tree a, Int ) -> Tree ( a, Int )
-tagWithDepth_ ( t, k ) =
+tagWithDepthHelp : Tree a -> Int -> Tree { label : a, depth : Int }
+tagWithDepthHelp t k =
     let
-        c =
+        children =
             Tree.children t
+                |> List.map (\subtree -> tagWithDepthHelp subtree (k + 1))
     in
-    Tree.tree ( Tree.label t, k ) (List.map (\t_ -> tagWithDepth_ ( t_, k + 1 )) c)
+    Tree.tree { label = Tree.label t, depth = k } children
 
 
 {-| Map a tree to a list of node contents:
@@ -289,20 +290,24 @@ toOutline stringOfLabel t =
         |> toOutlineHelp stringOfLabel
 
 
-toOutlineHelp : (a -> String) -> Tree ( a, Int ) -> String
+toOutlineHelp : (a -> String) -> Tree { label : a, depth : Int } -> String
 toOutlineHelp labelToString =
     let
-        combine : ( String, Int ) -> List String -> String
-        combine ( currentLabel, currentLevel ) children =
+        combineChildren : { label : String, depth : Int } -> List String -> String
+        combineChildren node children =
             let
                 prefix =
-                    String.repeat (2 * (currentLevel - 1)) " "
+                    String.repeat (2 * (node.depth - 1)) " "
             in
             case children of
                 [] ->
-                    prefix ++ currentLabel
+                    prefix ++ node.label
 
                 _ ->
-                    prefix ++ currentLabel ++ "\n" ++ String.join "\n" children
+                    prefix ++ node.label ++ "\n" ++ String.join "\n" children
+
+        mapLabel : { label : a, depth : Int } -> { label : String, depth : Int }
+        mapLabel node =
+            { label = labelToString node.label, depth = node.depth }
     in
-    Tree.restructure (Tuple.mapFirst labelToString) combine
+    Tree.restructure mapLabel combineChildren
