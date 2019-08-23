@@ -141,42 +141,29 @@ appendAtFocus level s z =
 
 addChildAtFocus : (a -> Int) -> a -> Zipper a -> Zipper a
 addChildAtFocus level s z =
-    case Zipper.lastChild z of
-        Nothing ->
-            z
-
-        Just zz ->
-            appendAtFocus level s zz
+    Zipper.lastChild z
+        |> Maybe.map (appendAtFocus level s)
+        |> Maybe.withDefault z
 
 
 addChildAtParentOfFocus : (a -> Int) -> a -> Zipper a -> Zipper a
 addChildAtParentOfFocus level s z =
-    case Zipper.parent z of
-        Nothing ->
-            z
-
-        Just zz ->
-            appendAtFocus level s zz
+    Zipper.parent z
+        |> Maybe.map (appendAtFocus level s)
+        |> Maybe.withDefault z
 
 
 addAtNthParent : (a -> Int) -> Int -> a -> Zipper a -> Zipper a
-addAtNthParent level k s z =
-    case manyParent k z of
-        Nothing ->
-            z
-
-        Just zz ->
-            appendAtFocus level s zz
+addAtNthParent toLevel k s z =
+    manyParent k z
+        |> Maybe.map (appendAtFocus toLevel s)
+        |> Maybe.withDefault z
 
 
 nthParentOfFocus : Int -> Zipper a -> Zipper a
 nthParentOfFocus k z =
-    case manyParent k z of
-        Nothing ->
-            z
-
-        Just zz ->
-            zz
+    manyParent k z
+        |> Maybe.withDefault z
 
 
 
@@ -205,6 +192,7 @@ manyBackward k z =
             zz =
                 Zipper.backward z
         in
+        -- Question: aren't we doing k+1 backwards here? zz already has 1 applied, then we do k more
         iterate k (\zi -> Maybe.andThen Zipper.backward zi) zz
 
 
