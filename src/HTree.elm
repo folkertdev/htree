@@ -209,8 +209,12 @@ manyBackward k z =
 
 
 iterate : Int -> (a -> a) -> a -> a
-iterate k f x =
-    List.foldl (\i acc -> f acc) x (List.range 1 k)
+iterate remaining f accumulator =
+    if remaining > 0 then
+        iterate (remaining - 1) f (f accumulator)
+
+    else
+        accumulator
 
 
 
